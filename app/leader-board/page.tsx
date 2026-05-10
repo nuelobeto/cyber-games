@@ -3,7 +3,7 @@
 import { Dashboard } from "@/components/layout/dashboard"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { usePlayersBySession } from "@/hooks/useSubscriptions"
-import { TOTAL_GAMES } from "@/lib/constants"
+import { FIRST_AVATAR, TOTAL_GAMES } from "@/lib/constants"
 import { Trophy } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 
@@ -52,7 +52,7 @@ export default function LeaderBoard() {
               {rankedPlayers.map((player, index) => {
                 const rank = index + 1
                 const username = player.username || `Player-${rank}`
-                const avatar = player.avatar || "/images/kyubi-v2.jpeg"
+                const avatar = player.avatar || FIRST_AVATAR
                 const completedGames = player.games_completed?.length ?? 0
 
                 return (

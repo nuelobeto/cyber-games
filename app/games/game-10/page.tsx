@@ -7,7 +7,7 @@ import { MoveToNextGame } from "@/components/features/move-to-next-game"
 import { Button } from "@/components/ui/button"
 import { usePlayer } from "@/hooks/useSubscriptions"
 import { useUpdatePlayerMutation } from "@/hooks/useMutation"
-import { GAME_LINKS, ROUTES, TOTAL_GAMES } from "@/lib/constants"
+import { FIRST_AVATAR, GAME_LINKS, ROUTES, TOTAL_GAMES } from "@/lib/constants"
 import { cn } from "@/lib/utils"
 import { IUpdatePlayer } from "@/types"
 import { ShieldCheck, Skull, ArrowLeft, ArrowRight } from "lucide-react"
@@ -129,7 +129,7 @@ export default function Game10() {
 
   const hasPlayedGame = player?.games_completed?.includes(GAME_ID)
 
-  const avatar = player?.avatar || "/images/kyubi-v2.jpeg"
+  const avatar = player?.avatar || FIRST_AVATAR
 
   const username = player?.username || "Player"
 

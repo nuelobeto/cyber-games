@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Container } from "./container"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { usePlayer, useSession } from "@/hooks/useSubscriptions"
-import { GAME_LINKS, ROUTES } from "@/lib/constants"
+import { FIRST_AVATAR, GAME_LINKS, ROUTES } from "@/lib/constants"
 import {
   Sheet,
   SheetContent,
@@ -39,7 +39,7 @@ export const Dashboard = ({ children }: Props) => {
   const { data: player } = usePlayer(playerId)
 
   const username = player?.username || "Player"
-  const avatar = player?.avatar || "/images/kyubi-v2.jpeg"
+  const avatar = player?.avatar || FIRST_AVATAR
 
   const pathname = usePathname()
 
