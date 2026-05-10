@@ -110,14 +110,16 @@ export default function SessionCode() {
                   "Start Session"
                 )}
               </Button>
-              <Button
-                size="lg"
-                variant="destructive"
-                className="sm:flex-1"
-                onClick={endSession}
-              >
-                End Session
-              </Button>
+              {session?.status === "active" && (
+                <Button
+                  size="lg"
+                  variant="destructive"
+                  className="sm:flex-1"
+                  onClick={endSession}
+                >
+                  End Session
+                </Button>
+              )}
               <Button
                 size="lg"
                 variant="outline"
