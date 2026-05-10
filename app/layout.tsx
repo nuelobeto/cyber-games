@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { Geist_Mono, Oxanium } from "next/font/google"
 
 import "./globals.css"
@@ -12,6 +13,32 @@ const fontMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
 })
+
+export const metadata: Metadata = {
+  title: {
+    default: "Cyber Games",
+    template: "%s | Cyber Games",
+  },
+  description:
+    "Cyber Games is an interactive cybersecurity learning game that teaches beginners core security concepts through fun challenges, quizzes, and arcade-style mini games.",
+  keywords: [
+    "Cyber Games",
+    "cybersecurity game",
+    "cybersecurity learning",
+    "cybersecurity for beginners",
+    "web security",
+    "network security",
+    "phishing awareness",
+    "cybersecurity education",
+  ],
+  authors: [
+    {
+      name: "Emmanuel Obeto",
+    },
+  ],
+  creator: "Emmanuel Obeto",
+  metadataBase: new URL("https://cybergames.app"),
+}
 
 export default function RootLayout({
   children,
