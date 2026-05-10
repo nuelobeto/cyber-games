@@ -14,7 +14,7 @@ import { ROUTES } from "@/lib/constants"
 
 export const Topbar = () => {
   return (
-    <nav className="fixed top-0 left-0 w-screen border-b bg-background">
+    <nav className="fixed top-0 left-0 z-50 w-screen border-b bg-background">
       <Container className="flex h-14 items-center justify-between">
         <Link
           href={ROUTES.home}
