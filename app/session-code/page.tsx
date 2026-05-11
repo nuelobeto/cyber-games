@@ -26,6 +26,8 @@ export default function SessionCode() {
       ? `${window.location.origin}${joinPath}`
       : joinPath
 
+  const joinSessionUrl = `${window.location.origin}${ROUTES.join_session}`
+
   const { data: session, isLoading } = useSession(sessionId)
 
   const numberOfParticipants = session?.number_of_participants ?? 0
@@ -83,7 +85,16 @@ export default function SessionCode() {
 
               <Separator />
 
-              <p className="text-center text-3xl font-semibold">{code}</p>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <p className="text-muted-foreground">
+                  Visit:{" "}
+                  <span className="font-bold text-green-500">
+                    {joinSessionUrl}
+                  </span>{" "}
+                  and enter the code below
+                </p>
+                <p className="text-center text-3xl font-semibold">{code}</p>
+              </div>
             </div>
 
             <div className="mt-12 flex flex-col gap-2 sm:flex-row sm:items-center">

@@ -22,12 +22,12 @@ export const PAGE_LINKS = [
 export const TOTAL_GAMES = 10
 
 export const AVATARS = [
+  "/images/naruto.jpeg",
   "/images/yuji.jpeg",
   "/images/luffy.jpeg",
   "/images/zoro.jpeg",
   "/images/konan.jpeg",
   "/images/itachi.jpeg",
-  "/images/naruto.jpeg",
   "/images/tsunade.jpeg",
   "/images/madara.jpeg",
   "/images/gon.jpeg",

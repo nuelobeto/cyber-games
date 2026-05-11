@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Container } from "./container"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { usePlayer, useSession } from "@/hooks/useSubscriptions"
-import { FIRST_AVATAR, GAME_LINKS, ROUTES } from "@/lib/constants"
+import { AVATARS, FIRST_AVATAR, GAME_LINKS, ROUTES } from "@/lib/constants"
 import {
   Sheet,
   SheetContent,
@@ -16,18 +16,51 @@ import {
 import { Gamepad2Icon, HomeIcon, Trophy } from "lucide-react"
 import { ScrollArea } from "../ui/scroll-area"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Separator } from "../ui/separator"
 import Image from "next/image"
 import { Button } from "../ui/button"
 import { CreateSessionDialog } from "../features/createSessionDialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Controller, useForm } from "react-hook-form"
+import { toast } from "sonner"
+import * as z from "zod"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+} from "@/components/ui/field"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useUpdatePlayerMutation } from "@/hooks/useMutation"
+import { IUpdatePlayer } from "@/types"
 
 interface Props {
   children: React.ReactNode
 }
 
+const formSchema = z.object({
+  username: z.string().min(3, "Bug title must be at least 5 characters."),
+})
+
 export const Dashboard = ({ children }: Props) => {
   const [openSidebar, setOpenSidebar] = useState(false)
+  const [openEditProfile, setOpenEditProfile] = useState(false)
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -50,6 +83,59 @@ export const Dashboard = ({ children }: Props) => {
   const sessionHasEnded = session?.status === "ended"
   const showPlayerStats = Boolean(playerId && player)
 
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+    },
+  })
+
+  const { mutate: updatePlayer, status: updatePlayerStatus } =
+    useUpdatePlayerMutation()
+
+  const isUpdatingPlayer = updatePlayerStatus === "pending"
+
+  function handleAvatarUpdate(avatar: string) {
+    if (!player?.id) return
+
+    const payload: IUpdatePlayer = {
+      player_id: player.id,
+      avatar,
+    }
+
+    updatePlayer(payload, {
+      onSuccess: () => {
+        toast.success("Avatar updated.")
+      },
+    })
+  }
+
+  function onSubmit(data: z.infer<typeof formSchema>) {
+    if (!player?.id) return
+
+    const payload: IUpdatePlayer = {
+      player_id: player.id,
+      username: data.username,
+    }
+
+    updatePlayer(payload, {
+      onSuccess: () => {
+        toast.success("Username updated.")
+      },
+    })
+  }
+
+  useEffect(() => {
+    if (!player?.username) return
+
+    form.setValue("username", player.username)
+  }, [player, form])
+
+  const handleLeaveSession = () => {
+    localStorage.clear()
+    router.replace(ROUTES.home)
+  }
+
   return (
     <>
       <header className="w-full border-b">
@@ -59,15 +145,29 @@ export const Dashboard = ({ children }: Props) => {
           </div>
 
           {player && (
-            <div className="flex items-center gap-2">
-              <span className="font-semibold">{username}</span>
-              <Avatar>
-                <AvatarImage src={avatar} />
-                <AvatarFallback>
-                  {username.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2">
+                  <span className="font-semibold">{username}</span>
+                  <Avatar>
+                    <AvatarImage src={avatar} />
+                    <AvatarFallback>
+                      {username.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem onClick={() => setOpenEditProfile(true)}>
+                    Edit Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLeaveSession}>
+                    Leave Session
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </Container>
       </header>
@@ -203,6 +303,82 @@ export const Dashboard = ({ children }: Props) => {
           </Link>
         </Container>
       </footer>
+
+      <Dialog open={openEditProfile} onOpenChange={setOpenEditProfile}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit your profile</DialogTitle>
+            <DialogDescription>
+              Choose a username and avatar for this game session.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form
+            id="username-form"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-6 flex w-full items-center gap-2"
+          >
+            <FieldGroup>
+              <Controller
+                name="username"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid} className="gap-0">
+                    <Input
+                      {...field}
+                      id="username"
+                      aria-invalid={fieldState.invalid}
+                      placeholder="Enter a username"
+                      autoComplete="off"
+                    />
+                    <FieldDescription>{/*  */}</FieldDescription>
+                    {fieldState.invalid && (
+                      <FieldError errors={[fieldState.error]} />
+                    )}
+                  </Field>
+                )}
+              />
+            </FieldGroup>
+
+            <Button
+              type="submit"
+              form="username-form"
+              disabled={isUpdatingPlayer}
+              className="w-[53.27px]"
+            >
+              {isUpdatingPlayer ? <Loader2 className="animate-spin" /> : "Save"}
+            </Button>
+          </form>
+
+          <div className="mt-8 grid grid-cols-3 gap-3">
+            {AVATARS.map((avatar) => {
+              const isSelected = player?.avatar === avatar
+
+              return (
+                <button
+                  key={avatar}
+                  type="button"
+                  disabled={isUpdatingPlayer}
+                  onClick={() => handleAvatarUpdate(avatar)}
+                  className={`rounded-2xl border p-1.5 transition ${
+                    isSelected
+                      ? "border-primary bg-primary/10"
+                      : "hover:border-primary/60"
+                  }`}
+                >
+                  <Image
+                    src={avatar}
+                    alt="Avatar option"
+                    width={100}
+                    height={100}
+                    className="block aspect-square w-full rounded-xl object-cover"
+                  />
+                </button>
+              )
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
