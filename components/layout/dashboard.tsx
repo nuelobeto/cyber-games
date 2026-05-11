@@ -47,7 +47,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useUpdatePlayerMutation } from "@/hooks/useMutation"
+import {
+  useUpdatePlayerMutation,
+  useUpdateSessionStatusMutation,
+} from "@/hooks/useMutation"
 import { IUpdatePlayer } from "@/types"
 
 interface Props {
@@ -131,6 +134,8 @@ export const Dashboard = ({ children }: Props) => {
     router.replace(ROUTES.home)
   }
 
+  const { mutate: endSession } = useUpdateSessionStatusMutation()
+
   useEffect(() => {
     if (!player?.username) return
 
@@ -142,7 +147,9 @@ export const Dashboard = ({ children }: Props) => {
     if (session.status !== "active") return
     if (!session.started_at) return
 
-    const updateCountdown = () => {
+    let hasEnded = false
+
+    const updateCountdown = async () => {
       const startedAt = new Date(session.started_at as string)
       const endsAt = new Date(
         startedAt.getTime() + session.duration_in_minutes * 60 * 1000
@@ -152,6 +159,31 @@ export const Dashboard = ({ children }: Props) => {
 
       if (difference <= 0) {
         setTimeLeft("00:00")
+
+        if (!hasEnded) {
+          hasEnded = true
+
+          endSession(
+            {
+              session_id: session.id,
+              status: "ended",
+            },
+            {
+              onSuccess: () => {
+                if (player) {
+                  router.replace(
+                    `${ROUTES.leader_board}?sessionId=${sessionId}&playerId=${playerId}`
+                  )
+                } else {
+                  router.replace(
+                    `${ROUTES.leader_board}?sessionId=${sessionId}`
+                  )
+                }
+              },
+            }
+          )
+        }
+
         return
       }
 
@@ -167,8 +199,10 @@ export const Dashboard = ({ children }: Props) => {
 
     const interval = window.setInterval(updateCountdown, 1000)
 
-    return () => window.clearInterval(interval)
-  }, [session])
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [endSession, player, playerId, router, session, sessionId])
 
   return (
     <>

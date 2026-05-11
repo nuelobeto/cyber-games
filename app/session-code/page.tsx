@@ -11,8 +11,11 @@ import { ROUTES } from "@/lib/constants"
 import { Loader2 } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { QRCodeCanvas } from "qrcode.react"
+import { useCallback, useEffect, useState } from "react"
 
 export default function SessionCode() {
+  const [timeLeft, setTimeLeft] = useState("")
+
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -26,7 +29,10 @@ export default function SessionCode() {
       ? `${window.location.origin}${joinPath}`
       : joinPath
 
-  const joinSessionUrl = `${window.location.origin}${ROUTES.join_session}`
+  const joinSessionUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}${ROUTES.join_session}`
+      : `${ROUTES.join_session}`
 
   const { data: session, isLoading } = useSession(sessionId)
 
@@ -51,7 +57,63 @@ export default function SessionCode() {
     )
   }
 
-  console.log(sessionId)
+  const endSessionAfterStart = useCallback(() => {
+    updateSessionStatus(
+      {
+        session_id: sessionId,
+        status: "ended",
+      },
+      {
+        onSuccess: async () => {
+          router.replace(`${ROUTES.leader_board}?sessionId=${sessionId}`)
+        },
+      }
+    )
+  }, [updateSessionStatus, sessionId, router])
+
+  useEffect(() => {
+    if (!session) return
+    if (session.status !== "active") return
+    if (!session.started_at) return
+
+    let hasEnded = false
+
+    const updateCountdown = async () => {
+      const startedAt = new Date(session.started_at as string)
+      const endsAt = new Date(
+        startedAt.getTime() + session.duration_in_minutes * 60 * 1000
+      )
+
+      const difference = endsAt.getTime() - Date.now()
+
+      if (difference <= 0) {
+        setTimeLeft("00:00")
+
+        if (!hasEnded) {
+          hasEnded = true
+
+          endSessionAfterStart()
+        }
+
+        return
+      }
+
+      const minutes = Math.floor(difference / 1000 / 60)
+      const seconds = Math.floor((difference / 1000) % 60)
+
+      setTimeLeft(
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+      )
+    }
+
+    updateCountdown()
+
+    const interval = window.setInterval(updateCountdown, 1000)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [endSessionAfterStart, router, session, sessionId])
 
   return (
     <>
@@ -116,7 +178,7 @@ export default function SessionCode() {
                 {isUpdatingSession ? (
                   <Loader2 className="animate-spin" />
                 ) : session?.status === "active" ? (
-                  "Session Started"
+                  <span>Session Started: {timeLeft}</span>
                 ) : (
                   "Start Session"
                 )}
