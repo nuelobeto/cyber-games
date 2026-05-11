@@ -61,6 +61,7 @@ const formSchema = z.object({
 export const Dashboard = ({ children }: Props) => {
   const [openSidebar, setOpenSidebar] = useState(false)
   const [openEditProfile, setOpenEditProfile] = useState(false)
+  const [timeLeft, setTimeLeft] = useState("")
 
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -78,7 +79,7 @@ export const Dashboard = ({ children }: Props) => {
 
   const currentGame = GAME_LINKS.find((game) => game.href === pathname)
 
-  const gameName = currentGame?.label ?? "Cyber Games"
+  const gameName = currentGame?.label ?? "CyberGames"
 
   const sessionHasEnded = session?.status === "ended"
   const showPlayerStats = Boolean(playerId && player)
@@ -125,16 +126,49 @@ export const Dashboard = ({ children }: Props) => {
     })
   }
 
+  const handleLeaveSession = () => {
+    localStorage.clear()
+    router.replace(ROUTES.home)
+  }
+
   useEffect(() => {
     if (!player?.username) return
 
     form.setValue("username", player.username)
   }, [player, form])
 
-  const handleLeaveSession = () => {
-    localStorage.clear()
-    router.replace(ROUTES.home)
-  }
+  useEffect(() => {
+    if (!session) return
+    if (session.status !== "active") return
+    if (!session.started_at) return
+
+    const updateCountdown = () => {
+      const startedAt = new Date(session.started_at as string)
+      const endsAt = new Date(
+        startedAt.getTime() + session.duration_in_minutes * 60 * 1000
+      )
+
+      const difference = endsAt.getTime() - Date.now()
+
+      if (difference <= 0) {
+        setTimeLeft("00:00")
+        return
+      }
+
+      const minutes = Math.floor(difference / 1000 / 60)
+      const seconds = Math.floor((difference / 1000) % 60)
+
+      setTimeLeft(
+        `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
+      )
+    }
+
+    updateCountdown()
+
+    const interval = window.setInterval(updateCountdown, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [session])
 
   return (
     <>
@@ -202,6 +236,12 @@ export const Dashboard = ({ children }: Props) => {
 
                 <Separator className="my-7" />
               </>
+            )}
+
+            {session?.status === "active" && (
+              <p className="mb-4 text-center font-medium">
+                Time left: <span className="text-foreground">{timeLeft}</span>
+              </p>
             )}
 
             {showPlayerStats && (
