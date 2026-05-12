@@ -39,7 +39,7 @@ import { AVATARS, FIRST_AVATAR } from "@/lib/constants"
 import { Footer } from "@/components/layout/footer"
 
 const formSchema = z.object({
-  username: z.string().min(3, "Bug title must be at least 5 characters."),
+  username: z.string().min(3, "Username must be at least 3 characters."),
 })
 
 export default function Lobby() {
@@ -94,6 +94,18 @@ export default function Lobby() {
     updatePlayer(payload, {
       onSuccess: () => {
         toast.success("Username updated.")
+      },
+      onError: (error) => {
+        const message =
+          error instanceof Error ? error.message : "Unable to update player."
+
+        toast.error(message)
+
+        if (player.username) {
+          form.setValue("username", player.username)
+        } else {
+          form.setValue("username", "")
+        }
       },
     })
   }

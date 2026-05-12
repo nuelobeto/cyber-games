@@ -58,7 +58,7 @@ interface Props {
 }
 
 const formSchema = z.object({
-  username: z.string().min(3, "Bug title must be at least 5 characters."),
+  username: z.string().min(3, "Username must be at least 3 characters."),
 })
 
 export const Dashboard = ({ children }: Props) => {
@@ -125,6 +125,18 @@ export const Dashboard = ({ children }: Props) => {
     updatePlayer(payload, {
       onSuccess: () => {
         toast.success("Username updated.")
+      },
+      onError: (error) => {
+        const message =
+          error instanceof Error ? error.message : "Unable to update player."
+
+        toast.error(message)
+
+        if (player.username) {
+          form.setValue("username", player.username)
+        } else {
+          form.setValue("username", "")
+        }
       },
     })
   }

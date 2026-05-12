@@ -237,6 +237,43 @@ const updatePlayer = async (payload: IUpdatePlayer): Promise<IPlayer> => {
 
   const currentPlayer = playerSnapshot.val() as IPlayer
 
+  if (updates.username) {
+    const nextUsername = updates.username.trim()
+
+    if (!nextUsername) {
+      throw new Error("Username is required")
+    }
+
+    const playersRef = ref(database, "players")
+
+    const playersQuery = query(
+      playersRef,
+      orderByChild("session_id"),
+      equalTo(currentPlayer.session_id)
+    )
+
+    const playersSnapshot = await get(playersQuery)
+
+    if (playersSnapshot.exists()) {
+      const players = playersSnapshot.val() as Record<string, IPlayer>
+
+      const usernameAlreadyExists = Object.values(players).some((player) => {
+        const isSamePlayer = player.id === player_id
+
+        const existingUsername = player.username?.trim().toLowerCase()
+        const newUsername = nextUsername.toLowerCase()
+
+        return !isSamePlayer && existingUsername === newUsername
+      })
+
+      if (usernameAlreadyExists) {
+        throw new Error("This username is already taken in this session")
+      }
+    }
+
+    updates.username = nextUsername
+  }
+
   const updatedPlayer: IPlayer = {
     ...currentPlayer,
     ...updates,
